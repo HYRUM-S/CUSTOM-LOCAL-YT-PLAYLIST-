@@ -16,7 +16,10 @@ void moveFiles(const char *sourceFolder, const char *destFolder, char fileList[M
         if (MoveFile(oldPath, newPath)) {
             printf("Moved: %s -> %s\n", fileList[i], newPath);
         } else {
-            printf("Error moving file: %s\n", fileList[i]);
+            DWORD errorCode = GetLastError();
+            char errorMessage[256];
+            FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorCode, 0, errorMessage, 256, NULL);
+            printf("Error moving file: %s (%d) - %s\n", fileList[i], errorCode, errorMessage);
         }
     }
 }
@@ -29,7 +32,13 @@ int main() {
     int fileCount = 0;
 
     // Create destination folder if it doesn't exist
-    CreateDirectory(destFolder, NULL);
+    if (!CreateDirectory(destFolder, NULL)) {
+        DWORD errorCode = GetLastError();
+        char errorMessage[256];
+        FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorCode, 0, errorMessage, 256, NULL);
+        printf("Error creating destination folder: %s (%d) - %s\n", destFolder, errorCode, errorMessage);
+        return 1;
+    }
 
     // Open order.txt
     FILE *fp = fopen(orderFile, "r");
